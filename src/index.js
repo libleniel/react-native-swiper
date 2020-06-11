@@ -199,7 +199,11 @@ export default class extends Component {
   UNSAFE_componentWillReceiveProps(nextProps) {
     if (!nextProps.autoplay && this.autoplayTimer)
       clearTimeout(this.autoplayTimer)
+
+    if (nextProps.autoplay) this.autoplay(true);
+
     if (nextProps.index === this.props.index) return
+
     this.setState(
       this.initState(nextProps, this.props.index !== nextProps.index)
     )
@@ -248,9 +252,20 @@ export default class extends Component {
     }
 
     // Support Optional render page
-    initState.children = Array.isArray(props.children)
+    // initState.children = Array.isArray(props.children)
+    //   ? props.children.filter(child => child)
+    //   : props.children
+
+    const children = Array.isArray(props.children)
       ? props.children.filter(child => child)
       : props.children
+
+    initState.children = React.Children.map(children, (child, i) => {
+        return React.cloneElement(child, {
+          isResetScale: i !== state.index,
+        })
+      }
+    );
 
     initState.total = initState.children ? initState.children.length || 1 : 0
 
@@ -368,12 +383,15 @@ export default class extends Component {
   /**
    * Automatic rolling
    */
-  autoplay = () => {
+  autoplay = (forceAutoPlay=false) => {
     if (
-      !Array.isArray(this.state.children) ||
-      !this.props.autoplay ||
-      this.internals.isScrolling ||
-      this.state.autoplayEnd
+      !forceAutoPlay && 
+      (
+        !Array.isArray(this.state.children) ||
+        !this.props.autoplay ||
+        this.internals.isScrolling ||
+        this.state.autoplayEnd
+      )
     )
       return
 
@@ -679,7 +697,7 @@ export default class extends Component {
         pointerEvents="none"
         style={[
           styles['pagination_' + this.state.dir],
-          this.props.paginationStyle
+          this.props.paginationStyle,
         ]}
       >
         {dots}
