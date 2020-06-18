@@ -298,13 +298,19 @@ export default class extends Component {
       initState.height = height
     }
 
-    initState.offset[initState.dir] =
+    if (this.initialRender) {
+      initState.offset[initState.dir] =
       initState.dir === 'y' ? height * props.index : width * props.index
+    } else if (this.props.loop && initState.total > 1) {
+      initState.offset[initState.dir] =
+      initState.dir === 'y' ? height * props.index : (width * props.index) + width
+    }
 
     this.internals = {
       ...this.internals,
       isScrolling: false
     }
+
     return initState
   }
 
@@ -346,6 +352,7 @@ export default class extends Component {
 
   loopJump = () => {
     if (!this.state.loopJump) return
+
     const i = this.state.index + (this.props.loop ? 1 : 0)
     const scrollView = this.scrollView
     this.loopJumpTimer = setTimeout(
@@ -795,6 +802,7 @@ export default class extends Component {
         onMomentumScrollEnd={this.onScrollEnd}
         onScrollEndDrag={this.onScrollEndDrag}
         style={this.props.scrollViewStyle}
+        scrollEnabled={(this && this.internals && !this.internals.isScrolling) || true}
       >
         {pages}
       </ScrollView>
